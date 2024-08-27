@@ -1,8 +1,3 @@
-# terraform-libvirt-Selton-Lucas_IaC
-
-# TODO ( Para fazer)
-
-
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
