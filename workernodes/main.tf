@@ -8,11 +8,12 @@ resource "libvirt_volume" "ubuntu-worker" {
   count  = length(var.nodes)
   name   = "ubuntuqcow-${var.nodes[count.index]}"
   pool   = libvirt_pool.workers.name
-  source = var.ubuntu_img_url
+  source = var.img
   format = "qcow2"
 }
 
 resource "libvirt_network" "worker-network" {
+  count  = length(var.nodes)
   name   = "${var.nodes[count.index]}-net"
   mode   = "bridge"
   bridge = "br0"
@@ -22,25 +23,24 @@ resource "libvirt_network" "worker-network" {
 
 }
 
-data "template_file" "user_data" {
-  count    = length(var.nodes)
-  template = file("${path.module}/config/cloud_init.yaml")
+# data "template_file" "user_data" {
+#   count    = length(var.nodes)
+#   template = file("${path.module}/config/cloud_init.yaml")
 
-  vars = {
-    hostname = "${var.nodes[count.index]}"
-  }
-}
+#   vars = {
+#     hostname = "${var.nodes[count.index]}"
+#   }
+# }
 
 resource "libvirt_cloudinit_disk" "commoninit" {
-  count     = length(var.nodes)
-  name      = "${var.nodes[count.index]}-commoninit.iso"
-  user_data = data.template_file.user_data[count.index].rendered
-  pool      = libvirt_pool.workers.name
+  count = length(var.nodes)
+  name  = "${var.nodes[count.index]}-commoninit.iso"
+  pool  = libvirt_pool.workers.name
 }
 
 resource "libvirt_domain" "workers" {
   count  = length(var.nodes)
-  name   = "${var.nodes[count.index]}"
+  name   = var.nodes[count.index]
   memory = 4096
   vcpu   = 2
 
@@ -49,7 +49,7 @@ resource "libvirt_domain" "workers" {
   network_interface {
     network_name   = libvirt_network.worker-network[count.index].name
     wait_for_lease = true
-    hostname       = "${var.nodes[count.index]}"
+    hostname       = var.nodes[count.index]
   }
 
   console {
