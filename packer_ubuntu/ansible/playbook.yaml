@@ -1,0 +1,10 @@
+---
+- hosts: all
+  tasks:
+    - name: Install 
+      become: true
+      snap:
+        name:
+          - microk8s
+        classic: true
+        channel: 1.26
