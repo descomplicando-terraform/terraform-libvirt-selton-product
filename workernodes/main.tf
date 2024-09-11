@@ -1,18 +1,18 @@
-resource "libvirt_pool" "workers" {
-  name = "workers"
+resource "libvirt_pool" "kubernetes" {
+  name = "pool-${var.nodes[0]}"
   type = "dir"
   path = var.libvirt_disk_path
 }
 
-resource "libvirt_volume" "ubuntu-worker" {
+resource "libvirt_volume" "ubuntu-kubernetes" {
   count  = length(var.nodes)
   name   = "ubuntuqcow-${var.nodes[count.index]}"
-  pool   = libvirt_pool.workers.name
+  pool   = libvirt_pool.kubernetes.name
   source = var.img
   format = "qcow2"
 }
 
-resource "libvirt_network" "worker-network" {
+resource "libvirt_network" "kubernetes-network" {
   count  = length(var.nodes)
   name   = "${var.nodes[count.index]}-net"
   mode   = "bridge"
@@ -35,19 +35,19 @@ resource "libvirt_network" "worker-network" {
 resource "libvirt_cloudinit_disk" "commoninit" {
   count = length(var.nodes)
   name  = "${var.nodes[count.index]}-commoninit.iso"
-  pool  = libvirt_pool.workers.name
+  pool  = libvirt_pool.kubernetes.name
 }
 
-resource "libvirt_domain" "workers" {
+resource "libvirt_domain" "kubernetes" {
   count  = length(var.nodes)
   name   = var.nodes[count.index]
-  memory = 4096
-  vcpu   = 2
+  memory = var.memory
+  vcpu   = var.vcpus
 
   cloudinit = libvirt_cloudinit_disk.commoninit[count.index].id
 
   network_interface {
-    network_name   = libvirt_network.worker-network[count.index].name
+    network_name   = libvirt_network.kubernetes-network[count.index].name
     wait_for_lease = true
     hostname       = var.nodes[count.index]
   }
@@ -65,7 +65,7 @@ resource "libvirt_domain" "workers" {
   }
 
   disk {
-    volume_id = libvirt_volume.ubuntu-worker[count.index].id
+    volume_id = libvirt_volume.ubuntu-kubernetes[count.index].id
   }
 
   qemu_agent = true

@@ -12,6 +12,18 @@ variable "nodes" {
 
 variable "libvirt_disk_path" {
   type        = string
-  default     = "var/lib/libvirt/pool/workers"
+  default     = "var/lib/libvirt/pool/kubernetes"
   description = "Path to libvirt the pool"
+}
+
+variable "memory" {
+  type        = number
+  default     = 4096
+  description = "ram"
+}
+
+variable "vcpus" {
+  type        = number
+  default     = 2
+  description = "vcpu"
 }
