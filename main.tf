@@ -1,9 +1,9 @@
 module "edge" {
-  source = "https://github.com/descomplicando-terraform/terraform-libvirt-selton-groundwork"
+  source = "git@github.com:descomplicando-terraform/terraform-libvirt-selton-kubernetes.git?ref=0.0.1"
 }
 
 module "controlplane" {
-  source            = "https://github.com/descomplicando-terraform/terraform-libvirt-selton-groundwork"
+  source            = "git@github.com:descomplicando-terraform/terraform-libvirt-selton-kubernetes.git?ref=0.0.1"
   nodes             = ["cp01"]
   memory            = 6144
   libvirt_disk_path = "var/lib/libvirt/pool/cp"
