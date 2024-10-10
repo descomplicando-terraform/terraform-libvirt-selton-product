@@ -1,0 +1,19 @@
+name: on demand vim creation
+on: workflow_dispatch
+jobs:
+  ondemand-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: on demand test
+        uses: appleboy/ssh-action@v1.1.0
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          script_stop: true
+          proxy_host: ${{ secrets.PROXY_HOST }}
+          proxy_username: ${{ secrets.PROXY_USERNAME }}
+          proxy_key: ${{ secrets.SSH_PROXY_KEY }}
+          proxy_port: ${{ secrets.PROXY_PORT }}
+          script: |
+            pwd
