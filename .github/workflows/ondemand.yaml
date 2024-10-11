@@ -19,4 +19,6 @@ jobs:
           proxy_key: ${{ secrets.SSH_PROXY_KEY }}
           proxy_port: ${{ secrets.PROXY_PORT }}
           script: |
-            pwd
+            echo ${{ github.event.client_payload.nodes }}
+            echo ${{ github.event.client_payload.ram }}
+            echo ${{ github.event.client_payload.libvirt_disk_path }}
