@@ -15,11 +15,13 @@ jobs:
             User $SSH_USER
             IdentityFile ~/.ssh/staging.key
             StrictHostKeyChecking no
+            Port 12345
           END
         env:
           SSH_USER: ${{ secrets.PROXY_USERNAME }}
           SSH_KEY: ${{ secrets.SSH_PROXY_KEY }}
           SSH_HOST: ${{ secrets.PROXY_HOST }}
+          SSH_PORT: ${{ secrets.PROXY_PORT }}
 
       - name: test
         run: ssh staging 'echo "i_was_here" > test.txt
