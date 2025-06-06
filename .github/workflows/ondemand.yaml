@@ -10,18 +10,25 @@ jobs:
           echo "$SSH_KEY" > ~/.ssh/staging.key
           chmod 600 ~/.ssh/staging.key
           cat >>~/.ssh/config <<END
-          Host staging
+          Host proxy
             HostName $SSH_HOST
             User $SSH_USER
             IdentityFile ~/.ssh/staging.key
             StrictHostKeyChecking no
             Port $SSH_PORT
+          Host qemu
+            HostName $QEMU_USER
+            User $QEMU_USER
+            StrictHostKeyChecking no
+            ProxyJump proxy
           END
         env:
           SSH_USER: ${{ secrets.PROXY_USERNAME }}
           SSH_KEY: ${{ secrets.SSH_PROXY_KEY }}
           SSH_HOST: ${{ secrets.PROXY_HOST }}
           SSH_PORT: ${{ secrets.PROXY_PORT }}
+          QEMU_USER: ${{ secrets.USERNAME }}
+          QEMU_HOST: ${{ secrets.HOST }} 
 
       - name: test
-        run: ssh staging 'echo "i_was_here" > test.txt'
+        run: ssh qemu 'echo "i_was_here" > test.txt'
