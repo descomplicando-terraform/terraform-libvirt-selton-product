@@ -15,7 +15,7 @@ jobs:
             User $SSH_USER
             IdentityFile ~/.ssh/staging.key
             StrictHostKeyChecking no
-            Port 12345
+            Port $SSH_PORT
           END
         env:
           SSH_USER: ${{ secrets.PROXY_USERNAME }}
