@@ -24,4 +24,4 @@ jobs:
           SSH_PORT: ${{ secrets.PROXY_PORT }}
 
       - name: test
-        run: ssh staging 'echo "i_was_here" > test.txt
+        run: ssh staging 'echo "i_was_here" > test.txt'
