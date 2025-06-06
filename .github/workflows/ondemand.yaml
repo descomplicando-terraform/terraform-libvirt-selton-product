@@ -4,16 +4,22 @@ jobs:
   ondemand-test:
     runs-on: ubuntu-latest
     steps:
-      - name: on demand test
-        uses: appleboy/ssh-action@v1.1.0
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          script_stop: true
-          proxy_host: ${{ secrets.PROXY_HOST }}
-          proxy_username: ${{ secrets.PROXY_USERNAME }}
-          proxy_key: ${{ secrets.SSH_PROXY_KEY }}
-          proxy_port: ${{ secrets.PROXY_PORT }}
-      - name: test ssh
-        run: ${{ secrets.EXEC_SCRIPT }}
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/staging.key
+          chmod 600 ~/.ssh/staging.key
+          cat >>~/.ssh/config <<END
+          Host staging
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/staging.key
+            StrictHostKeyChecking no
+          END
+        env:
+          SSH_USER: ${{ secrets.PROXY_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PROXY_KEY }}
+          SSH_HOST: ${{ secrets.PROXY_HOST }}
+
+      - name: test
+        run: ssh staging 'echo "i_was_here" > test.txt
