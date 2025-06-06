@@ -7,18 +7,21 @@ jobs:
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
-          echo "$SSH_KEY" > ~/.ssh/staging.key
-          chmod 600 ~/.ssh/staging.key
+          echo "$SSH_KEY" > ~/.ssh/proxy.key
+          chmod 600 ~/.ssh/proxy.key
+          echo "$QEMU_KEY" > ~/.ssh/qemu.key
+          chmod 600 ~/.ssh/qemu.key
           cat >>~/.ssh/config <<END
           Host proxy
             HostName $SSH_HOST
             User $SSH_USER
-            IdentityFile ~/.ssh/staging.key
+            IdentityFile ~/.ssh/proxy.key
             StrictHostKeyChecking no
             Port $SSH_PORT
           Host qemu
-            HostName $QEMU_USER
+            HostName $QEMU_HOST
             User $QEMU_USER
+            IdentityFile ~/.ssh/qemu.key
             StrictHostKeyChecking no
             ProxyJump proxy
           END
@@ -29,6 +32,8 @@ jobs:
           SSH_PORT: ${{ secrets.PROXY_PORT }}
           QEMU_USER: ${{ secrets.USERNAME }}
           QEMU_HOST: ${{ secrets.HOST }} 
+          QEMU_KEY: ${{ secrets.KEY }} 
+          QEMU_PORT: ${{ secrets.HOST }} 
 
       - name: test
         run: ssh qemu 'echo "i_was_here" > test.txt'
