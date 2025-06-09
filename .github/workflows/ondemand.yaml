@@ -4,6 +4,9 @@ jobs:
   ondemand-test:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
@@ -31,9 +34,14 @@ jobs:
           SSH_HOST: ${{ secrets.PROXY_HOST }}
           SSH_PORT: ${{ secrets.PROXY_PORT }}
           QEMU_USER: ${{ secrets.USERNAME }}
-          QEMU_HOST: ${{ secrets.HOST }} 
-          QEMU_KEY: ${{ secrets.KEY }} 
-          QEMU_PORT: ${{ secrets.HOST }} 
+          QEMU_HOST: ${{ secrets.HOST }}
+          QEMU_KEY: ${{ secrets.KEY }}
+          QEMU_PORT: ${{ secrets.HOST }}
 
-      - name: test
-        run: ssh qemu 'echo "i_was_here" > test.txt'
+      - name: libvirt env
+        run: export LIBVIRT_DEFAULT_URI="qemu+ssh://qemu/system"
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false
+        continue-on-error: true
