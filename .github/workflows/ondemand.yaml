@@ -41,6 +41,10 @@ jobs:
       - name: libvirt env
         run: export LIBVIRT_DEFAULT_URI="qemu+ssh://qemu/system"
 
+      - name: Terraform Init
+        id: init
+        run: terraform init -input=false-
+
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color -input=false
