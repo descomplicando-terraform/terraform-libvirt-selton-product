@@ -43,7 +43,7 @@ jobs:
           QEMU_HOST: ${{ secrets.HOST }}
           QEMU_KEY: ${{ secrets.KEY }}
           QEMU_PORT: ${{ secrets.HOST }}
-          GIT_KEY: ${{ secrets.GITKEY }}
+          GIT_KEY: ${{ secrets.GIT_KEY }}
 
       - name: libvirt env
         run: export LIBVIRT_DEFAULT_URI="qemu+ssh://qemu/system"
