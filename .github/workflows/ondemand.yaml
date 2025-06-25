@@ -32,10 +32,6 @@ jobs:
             IdentityFile ~/.ssh/qemu.key
             StrictHostKeyChecking no
             ProxyJump proxy
-          Host seltonlucas.github.com
-            HostName github.com
-            User git
-            IdentityFile ~/.ssh/git.key
           END
         env:
           SSH_USER: ${{ secrets.PROXY_USERNAME }}
@@ -48,9 +44,6 @@ jobs:
           QEMU_PORT: ${{ secrets.HOST }}
           GIT_KEY: ${{ secrets.GIT_KEY }}
       
-      - name: libvirt env
-        run: export LIBVIRT_DEFAULT_URI="qemu+ssh://qemu/system?known_hosts_verify=ignore"
-
       - name: Terraform Init
         id: init
         run: terraform init -input=false
