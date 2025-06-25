@@ -64,3 +64,5 @@ jobs:
         id: plan
         run: terraform plan -no-color -input=false
         continue-on-error: true
+        env:
+          QEMU_KNOWN_HOSTS: "ssh -i ~/.ssh/qemu.key -o UserKnownHostsFile=./known_hosts"
