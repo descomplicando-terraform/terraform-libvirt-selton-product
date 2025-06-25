@@ -6,7 +6,7 @@ variable "pool" {
 
 variable "libvirt_disk_path" {
   type        = string
-  default     = "var/lib/libvirt/pool/kubernetes"
+  default     = "/var/lib/libvirt/pool/kubernetes"
   description = "Path to libvirt the pool"
 }
 
@@ -32,4 +32,27 @@ variable "vcpus" {
   type        = number
   default     = 2
   description = "vcpu"
+}
+
+variable "config" {
+  type        = map(any)
+  description = "map with configurations"
+  default = {
+    edge = {
+      img               = "/home/latarc/jammy-server-cloudimg-amd64.img"
+      nodes             = ["edge01", "edge02"]
+      pool              = "kubernetes"
+      libvirt_disk_path = "/var/lib/libvirt/pool/kubernetes"
+      memory            = "4096"
+      vcpus             = 2
+    },
+    cp = {
+      img               = "/home/latarc/jammy-server-cloudimg-amd64.img"
+      nodes             = ["cp01"]
+      pool              = "cp"
+      libvirt_disk_path = "/var/lib/libvirt/pool/cp"
+      memory            = "6144"
+      vcpus             = 2
+    }
+  }
 }
