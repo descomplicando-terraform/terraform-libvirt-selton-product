@@ -57,13 +57,14 @@ jobs:
           && ssh-keyscan github.com > known_hosts
           && chmod 600 id_rsa known_hosts
           && ssh -i ./id_rsa -o UserKnownHostsFile=./known_hosts"
-
+      
+      - name: known hosts file
+        run: |
+          ssh-keyscan -t rsa $QEMU_HOST >> ~/.ssh/known_hosts
+        env:
+          QEMU_HOST: ${{ secrets.HOST }}
+        
       - name: Terraform Plan
         id: plan
         run: terraform plan -no-color -input=false
         continue-on-error: true
-        env:
-          QEMU_KNOWN_HOSTS: "echo '${{ secrets.KEY}}' > qemu
-          && ssh-keyscan ./qemu > known_hosts
-          && chmod 600 qemu known_hosts
-          && ssh -i ./qemu -o UserKnownHostsFile=./known_hosts"
