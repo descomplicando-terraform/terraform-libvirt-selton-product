@@ -63,7 +63,7 @@ jobs:
         run: terraform plan -no-color -input=false
         continue-on-error: true
         env:
-          QEMU_KNOWN_HOSTS: "export LIBVIRT_DEFAULT_URI='qemu+ssh://qemu/system'
-          && ssh-keyscan ~/.ssh/qemu.key > known_hosts
-          && chmod 600 known_hosts
-          && ssh -i ~/.ssh/qemu.key -o UserKnownHostsFile=./known_hosts"
+          QEMU_KNOWN_HOSTS: "echo '${{ secrets.KEY}}' > qemu
+          && ssh-keyscan ./qemu > known_hosts
+          && chmod 600 qemu known_hosts
+          && ssh -i ./qemu -o UserKnownHostsFile=./known_hosts"
