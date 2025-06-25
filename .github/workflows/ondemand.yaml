@@ -58,6 +58,6 @@ jobs:
           && chmod 600 id_rsa known_hosts
           && ssh -i ./id_rsa -o UserKnownHostsFile=./known_hosts"
       
-      - name: Terraform Apply
-        id: apply
-        run: terraform apply --auto-approve -no-color 
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -input=false
