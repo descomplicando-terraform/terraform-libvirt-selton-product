@@ -9,5 +9,5 @@ terraform {
 }
 
 provider "libvirt" {
-  uri = "qemu+ssh://qemu/system"
+  uri = "qemu+ssh://qemu/system?known_hosts_verify=ignore"
 }

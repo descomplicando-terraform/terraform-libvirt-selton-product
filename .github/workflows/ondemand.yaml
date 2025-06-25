@@ -58,12 +58,6 @@ jobs:
           && chmod 600 id_rsa known_hosts
           && ssh -i ./id_rsa -o UserKnownHostsFile=./known_hosts"
       
-      - name: known hosts file
-        run: |
-          ssh-keyscan -t rsa $QEMU_HOST >> ~/.ssh/known_hosts
-        env:
-          QEMU_HOST: ${{ secrets.HOST }}
-        
       - name: Terraform Apply
         id: apply
         run: terraform apply --auto-approve -no-color 
