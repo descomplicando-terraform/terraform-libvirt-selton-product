@@ -37,7 +37,6 @@ jobs:
             Port $SSH_PORT
           Host qemu
             HostName $QEMU_HOST
-            User $QEMU_USER
             IdentityFile ~/.ssh/qemu.key
             StrictHostKeyChecking no
             ProxyJump proxy
