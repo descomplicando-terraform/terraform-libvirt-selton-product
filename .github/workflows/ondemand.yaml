@@ -10,15 +10,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init
-        id: init
-        run: terraform init -input=false
-        env:
-          GIT_SSH_COMMAND: "echo '${{ secrets.GIT_KEY }}' > id_rsa
-          && ssh-keyscan github.com > known_hosts
-          && chmod 600 id_rsa known_hosts
-          && ssh -i ./id_rsa -o UserKnownHostsFile=./known_hosts"
-      
       - name: Configure SSH
         run: |
           mkdir -p ~/.ssh/
@@ -51,7 +42,23 @@ jobs:
           QEMU_KEY: ${{ secrets.KEY }}
           QEMU_PORT: ${{ secrets.HOST }}
           GIT_KEY: ${{ secrets.GIT_KEY }}
+      
+      - name: Terraform Init
+        id: init
+        run: terraform init -input=false
+        env:
+          GIT_SSH_COMMAND: "echo '${{ secrets.GIT_KEY }}' > id_rsa
+          && ssh-keyscan github.com > known_hosts
+          && chmod 600 id_rsa known_hosts
+          && ssh -i ./id_rsa -o UserKnownHostsFile=./known_hosts"
+      
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color -input=false
+        run: terraform plan -no-color -input=false -out=tfplan
+
+      - name: Copy plan
+        run : scp tfplan $QEMU_USER:$QEMU_HOST:/home/$QEMU_USER
+        env:
+          QEMU_USER: ${{ secrets.USERNAME }}
+          QEMU_HOST: ${{ secrets.HOST }}
