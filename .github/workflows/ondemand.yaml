@@ -65,4 +65,4 @@ jobs:
       
       - name: Terraform Apply
         id: apply
-        run: terraform apply no-color -auto-approve
+        run: terraform apply tfplan -auto-approve
