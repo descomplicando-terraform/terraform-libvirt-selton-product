@@ -39,7 +39,7 @@ variable "config" {
   description = "map with configurations"
   default = {
     edge = {
-      img               = "/home/latarc/jammy-server-cloudimg-amd64.img"
+      img               = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
       nodes             = ["edge01", "edge02"]
       pool              = "kubernetes"
       libvirt_disk_path = "/var/lib/libvirt/pool/kubernetes"
@@ -47,7 +47,7 @@ variable "config" {
       vcpus             = 2
     },
     cp = {
-      img               = "/home/latarc/jammy-server-cloudimg-amd64.img"
+      img               = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
       nodes             = ["cp01"]
       pool              = "cp"
       libvirt_disk_path = "/var/lib/libvirt/pool/cp"
