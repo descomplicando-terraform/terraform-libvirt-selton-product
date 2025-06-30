@@ -57,12 +57,12 @@ jobs:
         id: plan
         run: terraform plan -no-color -input=false -out=tfplan
 
+      - name: Terraform apply
+        if: steps.plan.outcome == 'success'
+        run: terraform apply -auto-approve tfplan
+
       - name: Copy state
         run : scp terraform.tfstate $QEMU_USER@qemu:/home/$QEMU_USER
         env:
           QEMU_USER: ${{ secrets.USERNAME }}
           QEMU_HOST: ${{ secrets.HOST }}
-      
-      - name: Terraform apply
-        if: steps.plan.outcome == 'success'
-        run: terraform apply -auto-approve tfplan
