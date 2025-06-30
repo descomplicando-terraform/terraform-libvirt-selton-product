@@ -63,6 +63,6 @@ jobs:
           QEMU_USER: ${{ secrets.USERNAME }}
           QEMU_HOST: ${{ secrets.HOST }}
       
-      - name: Terraform Apply
-        id: apply
-        run: terraform apply tfplan -auto-approve
+      - name: Terraform apply
+        if: steps.plan.outcome == 'success'
+        run: terraform apply -auto-approve tfplan
