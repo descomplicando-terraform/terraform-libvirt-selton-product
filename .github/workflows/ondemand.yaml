@@ -57,8 +57,8 @@ jobs:
         id: plan
         run: terraform plan -no-color -input=false -out=tfplan
 
-      - name: Copy plan
-        run : scp tfplan $QEMU_USER@qemu:/home/$QEMU_USER
+      - name: Copy state
+        run : scp terraform.tfstate $QEMU_USER@qemu:/home/$QEMU_USER
         env:
           QEMU_USER: ${{ secrets.USERNAME }}
           QEMU_HOST: ${{ secrets.HOST }}
