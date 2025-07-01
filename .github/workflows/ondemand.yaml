@@ -1,6 +1,10 @@
 name: on demand vim creation
 on:
   workflow_dispatch:
+    inputs:
+      terraform_variables:
+        required: false
+        type: string
   repository_dispatch:
     types: [ondemand]
 jobs:
