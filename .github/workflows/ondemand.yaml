@@ -64,7 +64,7 @@ jobs:
         id: plan
         run: terraform plan -var=${{ inputs.terraform_variables }} -no-color -input=false -out=tfplan
         env:
-          QEMU_USER: ${{ secrets.USERNAME }}
+          QEMU_HOST: ${{ secrets.HOST }}
 
       - name: Terraform apply
         if: steps.plan.outcome == 'success'
