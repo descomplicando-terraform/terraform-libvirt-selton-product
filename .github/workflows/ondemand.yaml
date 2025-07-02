@@ -59,7 +59,12 @@ jobs:
           && chmod 600 id_rsa known_hosts
           && ssh -i ./id_rsa -o UserKnownHostsFile=./known_hosts"
       
-
+      - name: download image
+        run: scp $QEMU_USER@qemu:/home/$QEMU_USER/ubuntu-20.04-x86_64.qcow2 . #temporary
+        env:
+            QEMU_USER: ${{ secrets.USERNAME }}
+            QEMU_HOST: ${{ secrets.HOST }} 
+      
       - name: Terraform Plan
         id: plan
         run: terraform plan -var=${{ inputs.terraform_variables }} -no-color -input=false -out=tfplan
@@ -69,7 +74,7 @@ jobs:
         run: terraform apply -auto-approve tfplan
 
       - name: Copy state
-        run : scp terraform.tfstate $QEMU_USER@qemu:/home/$QEMU_USER
+        run: scp terraform.tfstate $QEMU_USER@qemu:/home/$QEMU_USER
         env:
           QEMU_USER: ${{ secrets.USERNAME }}
           QEMU_HOST: ${{ secrets.HOST }}
