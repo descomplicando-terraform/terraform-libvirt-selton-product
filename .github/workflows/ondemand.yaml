@@ -60,10 +60,7 @@ jobs:
           && ssh -i ./id_rsa -o UserKnownHostsFile=./known_hosts"
       
       - name: download image
-        run: scp $QEMU_USER@qemu:/home/$QEMU_USER/ubuntu-20.04-x86_64.qcow2 . #temporary
-        env:
-            QEMU_USER: ${{ secrets.USERNAME }}
-            QEMU_HOST: ${{ secrets.HOST }} 
+        run: wget https://storage.cloud.google.com/k8sfree5gc/ubuntu-20.04-x86_64.qcow2 #temporary
       
       - name: Terraform Plan
         id: plan
