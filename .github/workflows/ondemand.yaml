@@ -13,7 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: hashicorp/setup-terraform@v3
-
+        with:
+          terraform_wrapper: false
       - name: Install genisoimage
         run: sudo apt install -y  genisoimage
 
@@ -75,3 +76,16 @@ jobs:
         env:
           QEMU_USER: ${{ secrets.USERNAME }}
           QEMU_HOST: ${{ secrets.HOST }}
+
+      - name: Get IP addresses from Terraform
+        id: tf-output
+        run: |
+          terraform output -json ip_address > ip.json
+      
+          IPS=$(jq -r '
+            to_entries
+            | map(.value.domain_ip[]?.address)
+            | join(" ")
+          ' ip.json)
+      
+          echo "ip_list=${IPS}" >> $GITHUB_OUTPUT
