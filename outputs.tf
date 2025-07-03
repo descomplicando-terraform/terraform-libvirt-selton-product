@@ -1,3 +1,3 @@
-output "ip_address" {
+output "domain" {
   value = module.kubernetes
 }
