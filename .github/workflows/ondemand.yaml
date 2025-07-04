@@ -81,12 +81,11 @@ jobs:
         id: tf-output
         run: |
           terraform output -json k8s > k8s.json
-
+          
           IPS=$(jq -r '
-            .k8s
-            | to_entries
+            to_entries
             | map(.value.domain_ip[]?.address)
             | join(" ")
           ' k8s.json)
-
-              echo "ip_list=${IPS}" >> $GITHUB_OUTPUT
+          
+          echo "ip_list=${IPS}" >> $GITHUB_OUTPUT
