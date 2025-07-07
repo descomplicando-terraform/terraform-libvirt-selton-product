@@ -91,7 +91,8 @@ jobs:
           echo "ip_list=${IPS}" >> $GITHUB_OUTPUT
 
       - name: echo outputs
-        run: echo "Parsed IPs: ${{ steps.tf-output.outputs.ip_list }}"
+        run: |
+          echo "Parsed IPs: ${{ steps.tf-output.outputs.ip_list }}"
 
       - name: Trigger OSM workflow
         run: |
