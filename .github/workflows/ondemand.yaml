@@ -87,8 +87,10 @@ jobs:
             | map(.value.domain_ip[]?.address)
             | join(" ")
           ' k8s.json)
-          
+          echo $IPS
           echo "ip_list=${IPS}" >> $GITHUB_OUTPUT
+
+      - run: echo "Parsed IPs: ${{ steps.tf-output.outputs.ip_list }}"
 
       - name: Trigger OSM workflow
         run: |
