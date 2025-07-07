@@ -98,6 +98,6 @@ jobs:
             -d '{
                   "ref": "pipeline-dev",
                   "inputs": {
-                    "cluster_ip": "${{ steps.get-ip.outputs.ip }}"
+                    "cluster_ip": "${{ steps.tf-output.outputs.ip_list }}"
                   }
                 }'
