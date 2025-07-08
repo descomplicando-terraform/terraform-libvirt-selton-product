@@ -80,15 +80,18 @@ jobs:
       - name: Get IP addresses from Terraform
         id: tf-output
         run: |
-          terraform output -json k8s > k8s.json
-          
+         terraform output -json k8s > k8s.json
+          echo "🔍 Terraform Output:"
+          cat k8s.json
+
           IPS=$(jq -r '
-            to_entries
-            | map(.value.domain_ip[]?.address)
-            | join(" ")
+          to_entries
+          | map(.value.domain_ip[]?.address)
+          | join(" ")
           ' k8s.json)
-          echo "$IPS"
-          echo "ip_list=${IPS}" >> $GITHUB_OUTPUT
+
+          echo "Parsed IPs: $IPS"
+          echo "ip_list=${IPS}" >> $GITHUB_OUTPUT 
 
       - name: echo outputs
         run: |
