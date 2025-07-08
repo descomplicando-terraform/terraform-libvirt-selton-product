@@ -90,7 +90,6 @@ jobs:
           | join(" ")
           ' k8s.json)
 
-          echo "Parsed IPs: $IPS"
           echo "ip_list=${IPS}" >> $GITHUB_OUTPUT 
 
       - name: echo outputs
