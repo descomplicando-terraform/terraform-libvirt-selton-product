@@ -86,7 +86,7 @@ jobs:
 
           IPS=$(jq -r '
           to_entries
-          | map(.value.domain_ip[]?.address)
+          | map(.value.domain[]?.address)
           | join(" ")
           ' k8s.json)
 
