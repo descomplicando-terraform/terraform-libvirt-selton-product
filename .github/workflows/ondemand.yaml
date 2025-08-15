@@ -59,18 +59,20 @@ jobs:
           && ssh-keyscan github.com > known_hosts
           && chmod 600 id_rsa known_hosts
           && ssh -i ./id_rsa -o UserKnownHostsFile=./known_hosts"
-      
-      - name: download image
-        run: wget https://storage.cloud.google.com/k8sfree5gc/ubuntu-20.04-x86_64.qcow2 #temporary
-      
+         
       - name: Terraform Plan
         id: plan
         run: terraform plan -var=${{ inputs.terraform_variables }} -no-color -input=false -out=tfplan
 
       - name: Terraform apply
+        id: apply
         if: steps.plan.outcome == 'success'
         run: terraform apply -auto-approve tfplan
 
+      - name: Terraform Destroy on Apply Failure
+        if: failure() && steps.apply.outcome == 'failure'
+        run: terraform destroy -auto-approve
+        
       - name: Copy state
         run: scp terraform.tfstate $QEMU_USER@qemu:/home/$QEMU_USER
         env:
