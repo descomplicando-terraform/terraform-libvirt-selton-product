@@ -108,6 +108,6 @@ jobs:
                   "ref": "pipeline-dev",
                   "inputs": {
                     "cluster_ip": "${{ steps.tf-output.outputs.ip_list }}",
-                    "cluster_name": "'"$cluster_name"'"
+                    "cluster_name": "$cluster_name"
                   }
                 }'
