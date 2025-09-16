@@ -1,5 +1,5 @@
 module "kubernetes" {
-  source   = "git::ssh://git@github.com/descomplicando-terraform/terraform-libvirt-selton-kubernetes.git?ref=0.0.1"
+  source   = "git::ssh://git@github.com/descomplicando-terraform/terraform-libvirt-selton-kubernetes.git?ref=0.0.2"
   for_each = var.config
 
 

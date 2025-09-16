@@ -1,22 +1,114 @@
 name: on demand vim creation
 on:
   workflow_dispatch:
+    inputs:
+      terraform_variables:
+        required: false
+        type: string
   repository_dispatch:
     types: [ondemand]
 jobs:
   ondemand-test:
     runs-on: ubuntu-latest
     steps:
-      - name: on demand test
-        uses: appleboy/ssh-action@v1.1.0
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.KEY }}
-          script_stop: true
-          proxy_host: ${{ secrets.PROXY_HOST }}
-          proxy_username: ${{ secrets.PROXY_USERNAME }}
-          proxy_key: ${{ secrets.SSH_PROXY_KEY }}
-          proxy_port: ${{ secrets.PROXY_PORT }}
-          script: |
-            ${{ secrets.EXEC_SCRIPT }} ${{ github.event.client_payload.args }}
+          terraform_wrapper: false
+      - name: Install genisoimage
+        run: sudo apt install -y  genisoimage
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh/
+          echo "$SSH_KEY" > ~/.ssh/proxy.key
+          chmod 600 ~/.ssh/proxy.key
+          echo "$QEMU_KEY" > ~/.ssh/qemu.key
+          chmod 600 ~/.ssh/qemu.key
+          echo "$GIT_KEY" > ~/.ssh/git.key
+          chmod 600 ~/.ssh/git.key
+          cat >>~/.ssh/config <<END
+          Host proxy
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/proxy.key
+            StrictHostKeyChecking no
+            Port $SSH_PORT
+          Host qemu
+            HostName $QEMU_HOST
+            IdentityFile ~/.ssh/qemu.key
+            StrictHostKeyChecking no
+            ProxyJump proxy
+          END
+        env:
+          SSH_USER: ${{ secrets.PROXY_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PROXY_KEY }}
+          SSH_HOST: ${{ secrets.PROXY_HOST }}
+          SSH_PORT: ${{ secrets.PROXY_PORT }}
+          QEMU_USER: ${{ secrets.USERNAME }}
+          QEMU_HOST: ${{ secrets.HOST }}
+          QEMU_KEY: ${{ secrets.KEY }}
+          QEMU_PORT: ${{ secrets.HOST }}
+          GIT_KEY: ${{ secrets.GIT_KEY }}
+      
+      - name: Terraform Init
+        id: init
+        run: terraform init -input=false
+        env:
+          GIT_SSH_COMMAND: "echo '${{ secrets.GIT_KEY }}' > id_rsa
+          && ssh-keyscan github.com > known_hosts
+          && chmod 600 id_rsa known_hosts
+          && ssh -i ./id_rsa -o UserKnownHostsFile=./known_hosts"
+         
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -var=${{ inputs.terraform_variables }} -no-color -input=false -out=tfplan
+
+      - name: Terraform apply
+        id: apply
+        if: steps.plan.outcome == 'success'
+        run: terraform apply -auto-approve tfplan
+
+      - name: Terraform Destroy on Apply Failure
+        if: failure() && steps.apply.outcome == 'failure'
+        run: terraform destroy -auto-approve
+        
+      - name: Copy state
+        run: scp terraform.tfstate $QEMU_USER@qemu:/home/$QEMU_USER
+        env:
+          QEMU_USER: ${{ secrets.USERNAME }}
+          QEMU_HOST: ${{ secrets.HOST }}
+
+      - name: Get IP addresses from Terraform
+        id: tf-output
+        run: |
+         terraform output -json k8s > k8s.json
+          echo "🔍 Terraform Output:"
+          cat k8s.json
+
+          IPS=$(jq -r '
+          to_entries
+          | map(.value.domain[]?.address)
+          | join(" ")
+          ' k8s.json)
+
+          echo "ip_list=${IPS}" >> $GITHUB_OUTPUT 
+
+      - name: echo outputs
+        run: |
+          echo "Parsed IPs: ${{ steps.tf-output.outputs.ip_list }}"
+
+      # - name: Trigger OSM workflow
+      #   run: |
+      #     cluster_name=$(echo '${{ inputs.terraform_variables }}' | grep -oP 'pool=\K[^ }]+')
+      #     echo $cluster_name
+      #     curl -X POST https://api.github.com/repos/seltonlucas/free5gc-osm/actions/workflows/deploy.yaml/dispatches \
+      #       -H "Authorization: token ${{ secrets.TOKEN }}" \
+      #       -H "Accept: application/vnd.github.v3+json" \
+      #       -d '{
+      #             "ref": "pipeline-dev",
+      #             "inputs": {
+      #               "cluster_ip": "${{ steps.tf-output.outputs.ip_list }}",
+      #               "cluster_name": "'"$cluster_name"'"
+      #             }
+      #           }'
