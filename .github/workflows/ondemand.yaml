@@ -98,17 +98,17 @@ jobs:
         run: |
           echo "Parsed IPs: ${{ steps.tf-output.outputs.ip_list }}"
 
-      - name: Trigger OSM workflow
-        run: |
-          cluster_name=$(echo '${{ inputs.terraform_variables }}' | grep -oP 'pool=\K[^ }]+')
-          echo $cluster_name
-          curl -X POST https://api.github.com/repos/seltonlucas/free5gc-osm/actions/workflows/deploy.yaml/dispatches \
-            -H "Authorization: token ${{ secrets.TOKEN }}" \
-            -H "Accept: application/vnd.github.v3+json" \
-            -d '{
-                  "ref": "pipeline-dev",
-                  "inputs": {
-                    "cluster_ip": "${{ steps.tf-output.outputs.ip_list }}",
-                    "cluster_name": "'"$cluster_name"'"
-                  }
-                }'
+      # - name: Trigger OSM workflow
+      #   run: |
+      #     cluster_name=$(echo '${{ inputs.terraform_variables }}' | grep -oP 'pool=\K[^ }]+')
+      #     echo $cluster_name
+      #     curl -X POST https://api.github.com/repos/seltonlucas/free5gc-osm/actions/workflows/deploy.yaml/dispatches \
+      #       -H "Authorization: token ${{ secrets.TOKEN }}" \
+      #       -H "Accept: application/vnd.github.v3+json" \
+      #       -d '{
+      #             "ref": "pipeline-dev",
+      #             "inputs": {
+      #               "cluster_ip": "${{ steps.tf-output.outputs.ip_list }}",
+      #               "cluster_name": "'"$cluster_name"'"
+      #             }
+      #           }'
