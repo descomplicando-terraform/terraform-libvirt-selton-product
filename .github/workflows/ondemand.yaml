@@ -1,4 +1,5 @@
-name: on demand vim creation
+name: on demand vim creation (with metrics)
+
 on:
   workflow_dispatch:
     inputs:
@@ -7,19 +8,59 @@ on:
         type: string
   repository_dispatch:
     types: [ondemand]
+
 jobs:
   ondemand-test:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: hashicorp/setup-terraform@v3
+      # ============================================
+      # INÍCIO - Capturar timestamp inicial
+      # ============================================
+      - name: 📊 Start Timer
+        id: start-timer
+        run: |
+          echo "start_time=$(date +%s)" >> $GITHUB_OUTPUT
+          echo "🕐 Workflow started at: $(date '+%Y-%m-%d %H:%M:%S')"
+      
+      # ============================================
+      # SETUP STEPS
+      # ============================================
+      - name: ⏱️ Checkout
+        id: checkout
+        uses: actions/checkout@v4
+      
+      - name: 📊 Checkpoint - Checkout
+        run: |
+          echo "checkout_end=$(date +%s)" >> $GITHUB_ENV
+          START_TIME=${{ steps.start-timer.outputs.start_time }}
+          NOW=$(date +%s)
+          ELAPSED=$((NOW - START_TIME))
+          echo "✓ Checkout completed in ${ELAPSED}s"
+      
+      - name: ⏱️ Setup Terraform
+        id: setup-tf
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_wrapper: false
-      - name: Install genisoimage
-        run: sudo apt install -y  genisoimage
-
-      - name: Configure SSH
+      
+      - name: 📊 Checkpoint - Setup Terraform
         run: |
+          START_TIME=${{ steps.start-timer.outputs.start_time }}
+          NOW=$(date +%s)
+          ELAPSED=$((NOW - START_TIME))
+          echo "✓ Terraform setup completed in ${ELAPSED}s"
+      
+      - name: ⏱️ Install genisoimage
+        run: |
+          START=$(date +%s)
+          sudo apt install -y genisoimage
+          END=$(date +%s)
+          echo "⏱️  genisoimage install: $((END - START))s"
+      
+      - name: ⏱️ Configure SSH
+        run: |
+          START=$(date +%s)
           mkdir -p ~/.ssh/
           echo "$SSH_KEY" > ~/.ssh/proxy.key
           chmod 600 ~/.ssh/proxy.key
@@ -29,86 +70,112 @@ jobs:
           chmod 600 ~/.ssh/git.key
           cat >>~/.ssh/config <<END
           Host proxy
-            HostName $SSH_HOST
-            User $SSH_USER
-            IdentityFile ~/.ssh/proxy.key
-            StrictHostKeyChecking no
-            Port $SSH_PORT
+              HostName $PROXY_HOST
+              User $PROXY_USER
+              IdentityFile ~/.ssh/proxy.key
+              StrictHostKeyChecking=no
           Host qemu
-            HostName $QEMU_HOST
-            IdentityFile ~/.ssh/qemu.key
-            StrictHostKeyChecking no
-            ProxyJump proxy
+              HostName $QEMU_HOST
+              User $QEMU_USER
+              ProxyJump proxy
+              IdentityFile ~/.ssh/qemu.key
+              StrictHostKeyChecking=no
           END
+          END=$(date +%s)
+          echo "⏱️  SSH config: $((END - START))s"
         env:
-          SSH_USER: ${{ secrets.PROXY_USERNAME }}
-          SSH_KEY: ${{ secrets.SSH_PROXY_KEY }}
-          SSH_HOST: ${{ secrets.PROXY_HOST }}
-          SSH_PORT: ${{ secrets.PROXY_PORT }}
-          QEMU_USER: ${{ secrets.USERNAME }}
-          QEMU_HOST: ${{ secrets.HOST }}
-          QEMU_KEY: ${{ secrets.KEY }}
-          QEMU_PORT: ${{ secrets.HOST }}
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          QEMU_KEY: ${{ secrets.QEMU_KEY }}
           GIT_KEY: ${{ secrets.GIT_KEY }}
+          PROXY_HOST: ${{ secrets.PROXY_HOST }}
+          PROXY_USER: ${{ secrets.PROXY_USER }}
+          QEMU_HOST: ${{ secrets.HOST }}
+          QEMU_USER: ${{ secrets.USERNAME }}
       
-      - name: Terraform Init
+      # ============================================
+      # TERRAFORM WORKFLOW (Core da medição)
+      # ============================================
+      - name: ⏱️ Terraform Init
         id: init
-        run: terraform init -input=false
-        env:
-          GIT_SSH_COMMAND: "echo '${{ secrets.GIT_KEY }}' > id_rsa
-          && ssh-keyscan github.com > known_hosts
-          && chmod 600 id_rsa known_hosts
-          && ssh -i ./id_rsa -o UserKnownHostsFile=./known_hosts"
-         
-      - name: Terraform Plan
+        run: |
+          START=$(date +%s)
+          ssh qemu "cd terraform && terraform init -reconfigure"
+          END=$(date +%s)
+          echo "init_duration=$((END - START))" >> $GITHUB_OUTPUT
+          echo "⏱️  Terraform Init: $((END - START))s"
+        
+      - name: ⏱️ Terraform Plan
         id: plan
-        run: terraform plan -var=${{ inputs.terraform_variables }} -no-color -input=false -out=tfplan
-
-      - name: Terraform apply
+        run: |
+          START=$(date +%s)
+          ssh qemu "cd terraform && terraform plan -var='${{ inputs.terraform_variables }}' -no-color -input=false -out=tfplan"
+          END=$(date +%s)
+          echo "plan_duration=$((END - START))" >> $GITHUB_OUTPUT
+          echo "⏱️  Terraform Plan: $((END - START))s"
+      
+      - name: ⏱️ Terraform Apply
         id: apply
         if: steps.plan.outcome == 'success'
-        run: terraform apply -auto-approve tfplan
-
+        run: |
+          START=$(date +%s)
+          ssh qemu "cd terraform && terraform apply -auto-approve tfplan"
+          END=$(date +%s)
+          echo "apply_duration=$((END - START))" >> $GITHUB_OUTPUT
+          echo "⏱️  Terraform Apply: $((END - START))s"
+      
       - name: Terraform Destroy on Apply Failure
         if: failure() && steps.apply.outcome == 'failure'
-        run: terraform destroy -auto-approve
-        
+        run: ssh qemu "cd terraform && terraform destroy -auto-approve"
+      
       - name: Copy state
-        run: scp terraform.tfstate $QEMU_USER@qemu:/home/$QEMU_USER
-        env:
-          QEMU_USER: ${{ secrets.USERNAME }}
-          QEMU_HOST: ${{ secrets.HOST }}
-
+        run: scp qemu:terraform/terraform.tfstate ./terraform.tfstate
+      
       - name: Get IP addresses from Terraform
         id: tf-output
         run: |
-         terraform output -json k8s > k8s.json
+          ssh qemu "cd terraform && terraform output -json k8s" > k8s.json
           echo "🔍 Terraform Output:"
           cat k8s.json
-
-          IPS=$(jq -r '
-          to_entries
-          | map(.value.domain[]?.address)
-          | join(" ")
-          ' k8s.json)
-
-          echo "ip_list=${IPS}" >> $GITHUB_OUTPUT 
-
-      - name: echo outputs
+          IPS=$(jq -r 'to_entries | map(.value.domain[]?.address) | join(" ")' k8s.json)
+          echo "ip_list=${IPS}" >> $GITHUB_OUTPUT
+      
+      # ============================================
+      # RESUMO FINAL
+      # ============================================
+      - name: 📊 Performance Summary
+        if: always()
         run: |
-          echo "Parsed IPs: ${{ steps.tf-output.outputs.ip_list }}"
-
-      # - name: Trigger OSM workflow
-      #   run: |
-      #     cluster_name=$(echo '${{ inputs.terraform_variables }}' | grep -oP 'pool=\K[^ }]+')
-      #     echo $cluster_name
-      #     curl -X POST https://api.github.com/repos/seltonlucas/free5gc-osm/actions/workflows/deploy.yaml/dispatches \
-      #       -H "Authorization: token ${{ secrets.TOKEN }}" \
-      #       -H "Accept: application/vnd.github.v3+json" \
-      #       -d '{
-      #             "ref": "pipeline-dev",
-      #             "inputs": {
-      #               "cluster_ip": "${{ steps.tf-output.outputs.ip_list }}",
-      #               "cluster_name": "'"$cluster_name"'"
-      #             }
-      #           }'
+          START_TIME=${{ steps.start-timer.outputs.start_time }}
+          END_TIME=$(date +%s)
+          TOTAL_DURATION=$((END_TIME - START_TIME))
+          
+          echo "========================================"
+          echo "   PIPELINE PERFORMANCE REPORT"
+          echo "========================================"
+          echo ""
+          echo "Terraform Init:  ${{ steps.init.outputs.init_duration }}s"
+          echo "Terraform Plan:  ${{ steps.plan.outputs.plan_duration }}s"
+          echo "Terraform Apply: ${{ steps.apply.outputs.apply_duration }}s"
+          echo ""
+          echo "TOTAL PIPELINE:  ${TOTAL_DURATION}s (~$((TOTAL_DURATION / 60))m)"
+          echo "========================================"
+          
+          # Salvar em artifact
+          cat > performance_report.txt <<EOF
+          Pipeline Performance Report
+          Execution Date: $(date '+%Y-%m-%d %H:%M:%S')
+          
+          Timings:
+          - Terraform Init:  ${{ steps.init.outputs.init_duration }}s
+          - Terraform Plan:  ${{ steps.plan.outputs.plan_duration }}s
+          - Terraform Apply: ${{ steps.apply.outputs.apply_duration }}s
+          
+          Total: ${TOTAL_DURATION}s
+          EOF
+      
+      - name: Upload Performance Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report
+          path: performance_report.txt
