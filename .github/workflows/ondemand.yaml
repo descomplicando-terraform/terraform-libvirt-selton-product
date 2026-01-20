@@ -114,7 +114,7 @@ jobs:
         id: plan
         run: |
           START=$(date +%s)
-          terraform plan -var=`${{ inputs.terraform_variables }}` -no-color -input=false -out=tfplan
+          terraform plan -var='${{ inputs.terraform_variables }}' -no-color -input=false -out=tfplan
           END=$(date +%s)
           echo "plan_duration=$((END - START))" >> $GITHUB_OUTPUT
           echo "⏱️  Terraform Plan: $((END - START))s"
