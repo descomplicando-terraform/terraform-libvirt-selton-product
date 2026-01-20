@@ -1,4 +1,3 @@
-name: on demand vim creation (with metrics)
 
 on:
   workflow_dispatch:
@@ -70,27 +69,29 @@ jobs:
           chmod 600 ~/.ssh/git.key
           cat >>~/.ssh/config <<END
           Host proxy
-              HostName $PROXY_HOST
-              User $PROXY_USER
-              IdentityFile ~/.ssh/proxy.key
-              StrictHostKeyChecking=no
+            HostName $SSH_HOST
+            User $SSH_USER
+            IdentityFile ~/.ssh/proxy.key
+            StrictHostKeyChecking no
+            Port $SSH_PORT
           Host qemu
-              HostName $QEMU_HOST
-              User $QEMU_USER
-              ProxyJump proxy
-              IdentityFile ~/.ssh/qemu.key
-              StrictHostKeyChecking=no
+            HostName $QEMU_HOST
+            IdentityFile ~/.ssh/qemu.key
+            StrictHostKeyChecking no
+            ProxyJump proxy
           END
           END=$(date +%s)
           echo "⏱️  SSH config: $((END - START))s"
         env:
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          QEMU_KEY: ${{ secrets.QEMU_KEY }}
-          GIT_KEY: ${{ secrets.GIT_KEY }}
-          PROXY_HOST: ${{ secrets.PROXY_HOST }}
-          PROXY_USER: ${{ secrets.PROXY_USER }}
-          QEMU_HOST: ${{ secrets.HOST }}
+          SSH_USER: ${{ secrets.PROXY_USERNAME }}
+          SSH_KEY: ${{ secrets.SSH_PROXY_KEY }}
+          SSH_HOST: ${{ secrets.PROXY_HOST }}
+          SSH_PORT: ${{ secrets.PROXY_PORT }}
           QEMU_USER: ${{ secrets.USERNAME }}
+          QEMU_HOST: ${{ secrets.HOST }}
+          QEMU_KEY: ${{ secrets.KEY }}
+          QEMU_PORT: ${{ secrets.HOST }}
+          GIT_KEY: ${{ secrets.GIT_KEY }}
       
       # ============================================
       # TERRAFORM WORKFLOW (Core da medição)
@@ -187,3 +188,4 @@ jobs:
         with:
           name: performance-report
           path: performance_report.txt
+
