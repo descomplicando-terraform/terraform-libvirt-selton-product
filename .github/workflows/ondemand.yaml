@@ -99,7 +99,7 @@ jobs:
         id: init
         run: |
           START=$(date +%s)
-          ssh qemu "cd terraform && terraform init -reconfigure"
+          terraform init
           END=$(date +%s)
           echo "init_duration=$((END - START))" >> $GITHUB_OUTPUT
           echo "⏱️  Terraform Init: $((END - START))s"
@@ -108,7 +108,7 @@ jobs:
         id: plan
         run: |
           START=$(date +%s)
-          ssh qemu "cd terraform && terraform plan -var='${{ inputs.terraform_variables }}' -no-color -input=false -out=tfplan"
+          terraform plan -var='${{ inputs.terraform_variables }}' -no-color -input=false -out=tfplan
           END=$(date +%s)
           echo "plan_duration=$((END - START))" >> $GITHUB_OUTPUT
           echo "⏱️  Terraform Plan: $((END - START))s"
@@ -118,22 +118,25 @@ jobs:
         if: steps.plan.outcome == 'success'
         run: |
           START=$(date +%s)
-          ssh qemu "cd terraform && terraform apply -auto-approve tfplan"
+          terraform apply -auto-approve tfplan
           END=$(date +%s)
           echo "apply_duration=$((END - START))" >> $GITHUB_OUTPUT
           echo "⏱️  Terraform Apply: $((END - START))s"
       
       - name: Terraform Destroy on Apply Failure
         if: failure() && steps.apply.outcome == 'failure'
-        run: ssh qemu "cd terraform && terraform destroy -auto-approve"
+        run: terraform destroy -auto-approve
       
       - name: Copy state
-        run: scp qemu:terraform/terraform.tfstate ./terraform.tfstate
+        run: scp terraform.tfstate $QEMU_USER@qemu:/home/$QEMU_USER
+        env:
+          QEMU_USER: ${{ secrets.USERNAME }}
+          QEMU_HOST: ${{ secrets.HOST }}
       
       - name: Get IP addresses from Terraform
         id: tf-output
         run: |
-          ssh qemu "cd terraform && terraform output -json k8s" > k8s.json
+          terraform output -json k8s > k8s.json
           echo "🔍 Terraform Output:"
           cat k8s.json
           IPS=$(jq -r 'to_entries | map(.value.domain[]?.address) | join(" ")' k8s.json)
